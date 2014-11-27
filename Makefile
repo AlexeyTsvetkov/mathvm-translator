@@ -10,7 +10,7 @@ endif
 USER_OBJ = \
    $(JIT_OBJ) \
    $(OBJ)/main$(OBJ_SUFF) \
-   $(OBJ)/interpreter_code$(OBJ_SUFF) \
+   $(OBJ)/info$(OBJ_SUFF) \
    $(OBJ)/bytecode_generator$(OBJ_SUFF) \
    $(OBJ)/bytecode_translator$(OBJ_SUFF)
 

@@ -10,21 +10,34 @@
 namespace mathvm {
 
 class TypeInfo {
-public:
-  TypeInfo(VarType type): type_(type) {};
-  TypeInfo(): type_(VT_INVALID) {};
-  ~TypeInfo() {}
-
-  VarType getType() { return type_; }
-  void setType(VarType type) { type_ = type; }
-
-private:
   VarType type_;
+
+public:
+  TypeInfo(VarType type): type_(type) {}
+  VarType type() { return type_; }
+};
+
+class VarInfo {
+  uint16_t functionId_;
+  uint16_t localId_;
+
+public:
+  VarInfo(uint16_t functionId, uint16_t localId)
+    : functionId_(functionId),
+      localId_(localId) {} 
+
+  uint16_t functionId() { return functionId_; }
+
+  uint16_t localId() { return localId_; }
 };
 
 template<typename InfoT>
-InfoT* getInfo(CustomDataHolder* dataHolder) {
-  return dynamic_cast<InfoT*> dataHolder->info();
+InfoT* getInfo(const CustomDataHolder* dataHolder) {
+  return static_cast<InfoT*>(dataHolder->info());
 }
 
+void setType(CustomDataHolder* dataHolder, VarType type);
+VarType typeOf(CustomDataHolder* dataHolder);
+
+} // namespace mathvm
 #endif

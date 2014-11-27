@@ -1,5 +1,5 @@
-#ifndef ERROR_REPORTER_HPP
-#define ERROR_REPORTER_HPP 
+#ifndef REPORT_HPP
+#define REPORT_HPP 
 
 #include "mathvm.h"
 
@@ -8,12 +8,12 @@
 
 namespace mathvm {
 
-class ErrorReporter {
+class Report {
   Status* status_;
 public:
-  ErrorReporter(): status_(Status::Ok()) {}
+  Report(): status_(Status::Ok()) {}
   
-  ~ErrorReporter() {
+  ~Report() {
     if (status_ != NULL) {
       delete status_;
     }
@@ -24,10 +24,6 @@ public:
     Status* status = status_;
     status_ = NULL;
     return status;
-  }
-
-  bool isOk() {
-    return status_->isOk();
   }
 
   bool isError() {
@@ -43,6 +39,11 @@ public:
   }
 private:
   void setStatus(Status* status) {
+    if (!status_->isOk()) {
+      delete status;
+      return;
+    }
+
     delete status_;
     status_ = status;
   } 

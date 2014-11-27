@@ -12,20 +12,16 @@
 namespace mathvm {
 
 class InterpreterFunction : public BytecodeFunction {
-  typedef std::map<std::string, uint32_t> LocalNameMap;
-  typedef std::map<Scope*, LocalNameMap> LocalScopeMap;
+  uint16_t deepness_; // how deep is function in ast (0 for top)
 
-  LocalScopeMap locals_;
 public:
-  InterpreterFunction(AstFunction* function)
+  InterpreterFunction(AstFunction* function, uint16_t deepness) 
     : BytecodeFunction(function),
-      locals_() {}
+      deepness_(deepness) {}
 
   virtual ~InterpreterFunction() {}
 
-  uint32_t declareLocal(Scope* scope, const std::string& name);
-
-  bool lookupLocal(Scope* scope, const std::string& name, uint32_t& id);
+  uint16_t deepness() const { return deepness_; }
 };
 
 class InterpreterCodeImpl : public Code {
