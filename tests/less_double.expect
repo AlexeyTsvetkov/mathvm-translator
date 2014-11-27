@@ -1,0 +1,13 @@
+function [0] void <top>()
+0: ILOAD 1
+9: DLOAD 2
+18: SWAP
+19: I2D
+20: SWAP
+21: DCMP
+22: ILOAD0
+23: IFICMPL 30
+26: ILOAD0
+27: JA 31
+30: ILOAD1
+31: STOP

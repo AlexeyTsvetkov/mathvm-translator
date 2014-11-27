@@ -1,0 +1,15 @@
+function [0] void <top>()
+0: DLOAD 1
+9: DLOAD 1
+18: DADD
+19: ILOAD 1
+28: DLOAD 1
+37: SWAP
+38: I2D
+39: SWAP
+40: DADD
+41: DLOAD 1
+50: ILOAD 1
+59: I2D
+60: DADD
+61: STOP
