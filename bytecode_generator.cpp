@@ -20,11 +20,38 @@ void BytecodeGenerator::visit(AstFunction* function) {
   ctx()->enterFunction(function);
   
   if (!isTopLevel(function)) { 
-    visit(function->scope());
+    parameters(function);
   } 
 
   visit(function->node());
   ctx()->exitFunction();
+}
+
+void BytecodeGenerator::parameters(AstFunction* function) {
+  Scope* scope = function->scope();
+  ctx()->enterScope(scope);
+  visit(scope);
+  
+  int64_t parametersNumber = function->parametersNumber();
+  for (int64_t i = parametersNumber - 1; i >= 0; --i) {
+    const std::string& name = function->parameterName(i);
+    AstVar* param = scope->lookupVariable(name);
+    VarInfo* info = getInfo<VarInfo>(param);
+    
+    Instruction insn;
+    switch (param->type()) {
+      case VT_INT:    insn = BC_STOREIVAR; break;
+      case VT_DOUBLE: insn = BC_STOREDVAR; break;
+      default:
+        report()->error("Illegal parameter type (int/double expected)", function->node());
+        return;
+    }
+
+    bc()->addInsn(insn);
+    bc()->addUInt16(info->localId());
+  }
+
+  ctx()->exitScope();
 }
 
 void BytecodeGenerator::visit(Scope* scope) {
