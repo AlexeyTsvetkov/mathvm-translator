@@ -172,7 +172,25 @@ void BytecodeGenerator::visit(StoreNode* node) {
   bc()->addUInt16(localId);
 }
 
-void BytecodeGenerator::visit(PrintNode* node) { node->visitChildren(this); }
+void BytecodeGenerator::visit(PrintNode* node) { 
+  for (uint32_t i = 0; i < node->operands(); ++i) {
+    AstNode* operand = node->operandAt(i);
+    operand->visit(this);
+    if (report()->isError()) return;
+
+    Instruction insn;
+    switch (typeOf(operand)) {
+      case VT_INT:    insn = BC_IPRINT; break;
+      case VT_DOUBLE: insn = BC_DPRINT; break;
+      case VT_STRING: insn = BC_SPRINT; break;
+      default:
+        report()->error("Print is only applicable to int, double, string", operand);
+        return;
+    }
+    bc()->addInsn(insn);
+  }
+}
+
 void BytecodeGenerator::visit(ReturnNode* node) { node->visitChildren(this); }
 void BytecodeGenerator::visit(CallNode* node) { node->visitChildren(this); }
 
