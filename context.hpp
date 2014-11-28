@@ -71,7 +71,11 @@ public:
     return (function == NULL) ? NULL : function->bytecode();
   }
 
-  InterpreterFunction* functionById(uint16_t id) {
+  InterpreterFunction* currentFunction() const {
+    return functionById(currentFunctionId());
+  }
+
+  InterpreterFunction* functionById(uint16_t id) const {
     return code_->functionById(id);
   }
 
@@ -80,7 +84,7 @@ public:
   }
 
   void declare(AstVar* var) {
-    InterpreterFunction* function = functionById(currentFunctionId());
+    InterpreterFunction* function = currentFunction();
     uint16_t functionId = function->id();
     uint16_t localsNumber = static_cast<uint16_t>(function->localsNumber());
     VarInfo* info = new VarInfo(functionId, localsNumber++);

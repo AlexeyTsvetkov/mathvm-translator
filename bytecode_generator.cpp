@@ -191,6 +191,21 @@ void BytecodeGenerator::visit(PrintNode* node) {
 
 void BytecodeGenerator::visit(ReturnNode* node) { 
   node->visitChildren(this);
+  if (report()->isError()) return;
+
+  AstNode* returnExpr = node->returnExpr();
+  VarType returnType = returnExpr == NULL ? VT_VOID : typeOf(returnExpr);
+  VarType expectedType = ctx()->currentFunction()->returnType();
+
+  if (returnType == VT_DOUBLE && expectedType == VT_INT) {
+    bc()->addInsn(BC_D2I);
+  } else if (returnType == VT_INT && expectedType == VT_DOUBLE) {
+    bc()->addInsn(BC_I2D);
+  } else if (returnType != expectedType) {
+    report()->error("Wrong return type", node);
+    return;
+  }
+
   bc()->addInsn(BC_RETURN); 
 }
 
