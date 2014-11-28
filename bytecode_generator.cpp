@@ -11,6 +11,7 @@
 namespace mathvm {
 
 Status* BytecodeGenerator::generate() {
+  ctx()->addFunction(top_);
   visit(top_);
   return report()->release();
 }
@@ -20,27 +21,30 @@ void BytecodeGenerator::visit(AstFunction* function) {
   
   if (!isTopLevel(function)) { 
     visit(function->scope());
-  }
+  } 
 
   visit(function->node());
   ctx()->exitFunction();
 }
 
 void BytecodeGenerator::visit(Scope* scope) {
-  ctx()->enterScope(scope);
-
   Scope::VarIterator varIt(scope);
   while (varIt.hasNext()) {
     AstVar* var = varIt.next();
     ctx()->declare(var);
   }
 
+  // Functions can call other functions defined
+  // later in same scope, so add them before visit
+  Scope::FunctionIterator addFunIt(scope);
+  while (addFunIt.hasNext()) {
+    ctx()->addFunction(addFunIt.next()); 
+  }
+
   Scope::FunctionIterator funIt(scope);
   while (funIt.hasNext()) {
     visit(funIt.next()); 
   }
-
-  ctx()->exitScope();
 }
 
 void BytecodeGenerator::visit(FunctionNode* function) {
@@ -52,8 +56,11 @@ void BytecodeGenerator::visit(FunctionNode* function) {
 }
 
 void BytecodeGenerator::visit(BlockNode* block) {
-  visit(block->scope());
+  Scope* scope = block->scope();
+  ctx()->enterScope(scope);
+  visit(scope);
   block->visitChildren(this);
+  ctx()->exitScope();
 }
 
 void BytecodeGenerator::visit(NativeCallNode* node) { node->visitChildren(this); }
@@ -189,6 +196,16 @@ void BytecodeGenerator::visit(PrintNode* node) {
   }
 }
 
+void BytecodeGenerator::cast(VarType from, VarType to, AstNode* node) {
+  if (from == VT_DOUBLE && to == VT_INT) {
+    bc()->addInsn(BC_D2I);
+  } else if (from == VT_INT && to == VT_DOUBLE) {
+    bc()->addInsn(BC_I2D);
+  } else if (from != to) {
+    report()->error("Wrong return type", node);
+  }
+}
+
 void BytecodeGenerator::visit(ReturnNode* node) { 
   node->visitChildren(this);
   if (report()->isError()) return;
@@ -196,20 +213,32 @@ void BytecodeGenerator::visit(ReturnNode* node) {
   AstNode* returnExpr = node->returnExpr();
   VarType returnType = returnExpr == NULL ? VT_VOID : typeOf(returnExpr);
   VarType expectedType = ctx()->currentFunction()->returnType();
-
-  if (returnType == VT_DOUBLE && expectedType == VT_INT) {
-    bc()->addInsn(BC_D2I);
-  } else if (returnType == VT_INT && expectedType == VT_DOUBLE) {
-    bc()->addInsn(BC_I2D);
-  } else if (returnType != expectedType) {
-    report()->error("Wrong return type", node);
-    return;
-  }
-
+  cast(returnType, expectedType, node);
   bc()->addInsn(BC_RETURN); 
 }
 
-void BytecodeGenerator::visit(CallNode* node) { node->visitChildren(this); }
+void BytecodeGenerator::visit(CallNode* node) { 
+  Scope* scope = ctx()->currentScope();
+  AstFunction* function = scope->lookupFunction(node->name());
+  
+  if (node->parametersNumber() != function->parametersNumber()) {
+    report()->error("Invocation has wrong argument number", node);
+    return;
+  }
+  
+  for (uint32_t i = 0; i < node->parametersNumber(); ++i) {
+    AstNode* argument = node->parameterAt(i);
+    argument->visit(this);
+    if (report()->isError()) return;
+
+    cast(typeOf(argument), function->parameterType(i), argument);
+    if (report()->isError()) return;
+  }  
+
+  bc()->addInsn(BC_CALL);
+  bc()->addUInt16(ctx()->getId(function));
+  setType(node, function->returnType());
+}
 
 void BytecodeGenerator::visit(BinaryOpNode* op) { 
   switch (op->kind()) {

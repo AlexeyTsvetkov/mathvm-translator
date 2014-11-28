@@ -8,18 +8,23 @@
 #include "interpreter_code.hpp"
 #include "report.hpp"
 
+#include <map>
 #include <stack>
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace mathvm {
 
 class Context {
+  typedef std::map<AstFunction*, uint16_t> IdByFunctionMap;
+
   InterpreterCodeImpl* code_;
   Report report_;
   std::stack<uint16_t> functionIds_;
   std::stack<Scope*> scopes_;
   std::vector<VarInfo*> varInfos_; 
+  IdByFunctionMap idByFunction_;
 
 public:
   Context(InterpreterCodeImpl* code)
@@ -36,15 +41,25 @@ public:
     return &report_;
   }
 
-  void enterFunction(AstFunction* function) {
+  void addFunction(AstFunction* function) {
     uint16_t deepness = static_cast<uint16_t>(functionIds_.size());
     uint16_t id = code_->addFunction(new InterpreterFunction(function, deepness));
-    functionIds_.push(id);
+    idByFunction_.insert(std::make_pair(function, id));
+  }
+
+  void enterFunction(AstFunction* function) {
+    functionIds_.push(getId(function));
   }
 
   void exitFunction() {
     assert(!functionIds_.empty());
     functionIds_.pop();
+  }
+
+  uint16_t getId(AstFunction* function) {
+    IdByFunctionMap::iterator it = idByFunction_.find(function);
+    assert(it != idByFunction_.end());
+    return it->second;
   }
 
   uint16_t currentFunctionId() const {
