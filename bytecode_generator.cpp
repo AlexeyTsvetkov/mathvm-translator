@@ -45,12 +45,10 @@ void BytecodeGenerator::visit(Scope* scope) {
 
 void BytecodeGenerator::visit(FunctionNode* function) {
   function->body()->visit(this);
-
-  if (isTopLevel(function)) {
-    bc()->addInsn(BC_STOP);
-  } else {
-    bc()->addInsn(BC_RETURN);
-  }
+  // If reached from top-level fun, it's OK.
+  // Otherwise it means that there's no return in fun,
+  // so stop execution anyway.
+  bc()->addInsn(BC_STOP); 
 }
 
 void BytecodeGenerator::visit(BlockNode* block) {
@@ -191,7 +189,11 @@ void BytecodeGenerator::visit(PrintNode* node) {
   }
 }
 
-void BytecodeGenerator::visit(ReturnNode* node) { node->visitChildren(this); }
+void BytecodeGenerator::visit(ReturnNode* node) { 
+  node->visitChildren(this);
+  bc()->addInsn(BC_RETURN); 
+}
+
 void BytecodeGenerator::visit(CallNode* node) { node->visitChildren(this); }
 
 void BytecodeGenerator::visit(BinaryOpNode* op) { 
