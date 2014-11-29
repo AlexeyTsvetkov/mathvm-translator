@@ -16,7 +16,7 @@ Status* BytecodeGenerator::generate() {
   
   try {
     visit(top_);
-  } catch (GeneratorException& e) {
+  } catch (TranslationException& e) {
     return Status::Error(e.what(), e.at()->position());
   }
 
@@ -50,7 +50,7 @@ void BytecodeGenerator::parameters(AstFunction* function) {
       case VT_INT:    insn = BC_STOREIVAR; break;
       case VT_DOUBLE: insn = BC_STOREDVAR; break;
       default:
-        throw GeneratorException("Illegal parameter type (int/double expected)", function->node());
+        throw TranslationException("Illegal parameter type (int/double expected)", function->node());
         return;
     }
 
@@ -152,7 +152,7 @@ void BytecodeGenerator::loadVar(VarType type, uint16_t localId, uint16_t context
       bc()->addUInt16(localId);
       break;
     default:
-      throw GeneratorException("Wrong var reference type (only numbers are supported)", node);
+      throw TranslationException("Wrong var reference type (only numbers are supported)", node);
   }
 }
 
@@ -171,7 +171,7 @@ void BytecodeGenerator::visit(StoreNode* node) {
   const AstVar* var = node->var();
   VarType type = var->type();
   if (!isNumeric(type)) {
-    throw GeneratorException("Variable can`t have not-numeric type", node);
+    throw TranslationException("Variable can`t have not-numeric type", node);
   }
 
   uint16_t localId;
@@ -193,7 +193,7 @@ void BytecodeGenerator::visit(StoreNode* node) {
 
       break;
     default:
-      throw GeneratorException("Wrong RHS type", node);
+      throw TranslationException("Wrong RHS type", node);
   }
 
   if (node->op() != tASSIGN) {
@@ -227,7 +227,7 @@ void BytecodeGenerator::visit(PrintNode* node) {
       case VT_DOUBLE: insn = BC_DPRINT; break;
       case VT_STRING: insn = BC_SPRINT; break;
       default:
-        throw GeneratorException("Print is only applicable to int, double, string", operand);
+        throw TranslationException("Print is only applicable to int, double, string", operand);
     }
     bc()->addInsn(insn);
   }
@@ -239,7 +239,7 @@ void BytecodeGenerator::cast(VarType from, VarType to, AstNode* node) {
   } else if (from == VT_INT && to == VT_DOUBLE) {
     bc()->addInsn(BC_I2D);
   } else if (from != to) {
-    throw GeneratorException("Wrong return type", node);
+    throw TranslationException("Wrong return type", node);
   }
 }
 
@@ -258,7 +258,7 @@ void BytecodeGenerator::visit(CallNode* node) {
   AstFunction* function = scope->lookupFunction(node->name());
   
   if (node->parametersNumber() != function->parametersNumber()) {
-    throw GeneratorException("Invocation has wrong argument number", node);
+    throw TranslationException("Invocation has wrong argument number", node);
   }
   
   for (uint32_t i = 0; i < node->parametersNumber(); ++i) {
@@ -304,7 +304,7 @@ void BytecodeGenerator::visit(BinaryOpNode* op) {
       break;
 
     default:
-      throw GeneratorException("Unknown binary operator", op);
+      throw TranslationException("Unknown binary operator", op);
   }
 }
 
@@ -316,7 +316,7 @@ void BytecodeGenerator::visit(UnaryOpNode* op) {
     case tSUB: negOp(op); break;
     case tNOT: notOp(op); break;
     default:
-      throw GeneratorException("Unknown unary operator", op);
+      throw TranslationException("Unknown unary operator", op);
   }
 }
 
@@ -350,13 +350,13 @@ void BytecodeGenerator::negOp(UnaryOpNode* op) {
       setType(op, VT_DOUBLE);
       break;
     default:
-      throw GeneratorException("Unary sub (-) is only applicable to int/double", op);
+      throw TranslationException("Unary sub (-) is only applicable to int/double", op);
   }
 }
 
 void BytecodeGenerator::notOp(UnaryOpNode* op) {
   if (typeOf(op->operand()) != VT_INT) {
-    throw GeneratorException("Unary not (!) is only applicable to int", op);
+    throw TranslationException("Unary not (!) is only applicable to int", op);
   }
 
   Label setFalse(bc());
@@ -375,7 +375,7 @@ void BytecodeGenerator::notOp(UnaryOpNode* op) {
 void BytecodeGenerator::logicalOp(BinaryOpNode* op) {
 TokenKind token = op->kind();
   if (token != tAND && token != tOR) {
-    throw GeneratorException("Unknown logical operator", op);
+    throw TranslationException("Unknown logical operator", op);
   }
   
   bool isAnd = (token == tAND);
@@ -398,7 +398,7 @@ TokenKind token = op->kind();
   op->right()->visit(this);
     
   if (typeOf(op->left()) != VT_INT || typeOf(op->right()) != VT_INT) {
-    throw GeneratorException("Logical operators are only applicable integer operands", op);
+    throw TranslationException("Logical operators are only applicable integer operands", op);
   }
 
   // only reachable in cases:
@@ -422,7 +422,7 @@ void BytecodeGenerator::bitwiseOp(BinaryOpNode* op) {
 
   
   if (typeOf(op->left()) != VT_INT || typeOf(op->right()) != VT_INT) {
-    throw GeneratorException("Bitwise operator is only applicable to int operands", op);
+    throw TranslationException("Bitwise operator is only applicable to int operands", op);
   }
 
   switch (op->kind()) {
@@ -436,7 +436,7 @@ void BytecodeGenerator::bitwiseOp(BinaryOpNode* op) {
       bc()->addInsn(BC_IAXOR);
       break;
     default:
-      throw GeneratorException("Unknown bitwise binary operator", op);
+      throw TranslationException("Unknown bitwise binary operator", op);
   } 
 }
 
@@ -454,7 +454,7 @@ void BytecodeGenerator::comparisonOp(BinaryOpNode* op) {
     case tLT:  cmpi = BC_IFICMPL;  break;
     case tLE:  cmpi = BC_IFICMPLE; break;
     default:
-      throw GeneratorException("Unknown comparison operator", op);
+      throw TranslationException("Unknown comparison operator", op);
   }
 
   Label setTrue(bc());
@@ -489,11 +489,11 @@ void BytecodeGenerator::arithmeticOp(BinaryOpNode* op) {
       if (isInt) {
         insn = BC_IMOD;
       } else {
-        throw GeneratorException("Modulo (%) is only applicable to integers", op);
+        throw TranslationException("Modulo (%) is only applicable to integers", op);
       }
       break;
     default:
-      throw GeneratorException("Unknown arithmetic binary operator", op);
+      throw TranslationException("Unknown arithmetic binary operator", op);
   }
 
   bc()->addInsn(insn);
@@ -505,7 +505,7 @@ VarType BytecodeGenerator::castOperandsNumeric(BinaryOpNode* op) {
   VarType tUpper = typeOf(op->right());
   
   if (!isNumeric(tLower) || !isNumeric(tUpper)) {
-    throw GeneratorException("Operator is only applicable to numbers", op);
+    throw TranslationException("Operator is only applicable to numbers", op);
   }
 
   bool isInt = tLower == VT_INT && tUpper == VT_INT;

@@ -7,12 +7,12 @@
 
 namespace mathvm {
 
-class GeneratorException : public std::exception {
+class TranslationException : public std::exception {
   AstNode* node_;
   const char* message_;
 
 public:
-  GeneratorException(const char* message, AstNode* node)
+  TranslationException(const char* message, AstNode* node)
     : node_(node),
       message_(message) {}
 
