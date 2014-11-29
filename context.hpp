@@ -6,7 +6,6 @@
 
 #include "info.hpp"
 #include "interpreter_code.hpp"
-#include "report.hpp"
 
 #include <map>
 #include <stack>
@@ -20,7 +19,6 @@ class Context {
   typedef std::map<AstFunction*, uint16_t> IdByFunctionMap;
 
   InterpreterCodeImpl* code_;
-  Report report_;
   std::stack<uint16_t> functionIds_;
   std::stack<Scope*> scopes_;
   std::vector<VarInfo*> varInfos_; 
@@ -28,17 +26,12 @@ class Context {
 
 public:
   Context(InterpreterCodeImpl* code)
-    : code_(code), 
-      report_() {}
+    : code_(code) {}
 
   ~Context() {
     for (size_t i = 0; i < varInfos_.size(); ++i) {
       delete varInfos_[i];
     }
-  }
-
-  Report* report() {
-    return &report_;
   }
 
   void addFunction(AstFunction* function) {

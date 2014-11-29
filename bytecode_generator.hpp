@@ -27,9 +27,7 @@ namespace mathvm {
   #define VISITOR_FUNCTION(type, name)     \
     void visit(type* node);                \
     virtual void visit##type(type* node) { \
-      if (shouldVisit(node)) {             \
-        visit(node);                       \
-      }                                    \
+      visit(node);                         \
     }                                      \
 
     FOR_NODES(VISITOR_FUNCTION)
@@ -50,10 +48,6 @@ namespace mathvm {
     void cast(VarType from, VarType to, AstNode* node);
     void parameters(AstFunction* function);
 
-    bool shouldVisit(AstNode* node) {
-      return !report()->isError();
-    }
-
     Bytecode* bc() {
       uint16_t id = ctx()->currentFunctionId();
       Bytecode* bytecode = ctx()->bytecodeByFunctionId(id);
@@ -63,10 +57,6 @@ namespace mathvm {
 
     Context* ctx() {
       return &context_;
-    }
-
-    Report* report() {
-      return ctx()->report();
     }
   };
 }
