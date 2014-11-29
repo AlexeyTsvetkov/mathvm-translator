@@ -28,78 +28,24 @@ public:
   Context(InterpreterCodeImpl* code)
     : code_(code) {}
 
-  ~Context() {
-    for (size_t i = 0; i < varInfos_.size(); ++i) {
-      delete varInfos_[i];
-    }
-  }
+  ~Context();
 
-  void addFunction(AstFunction* function) {
-    uint16_t deepness = static_cast<uint16_t>(functionIds_.size());
-    uint16_t id = code_->addFunction(new InterpreterFunction(function, deepness));
-    idByFunction_.insert(std::make_pair(function, id));
-  }
+  void addFunction(AstFunction* function);
+  void enterFunction(AstFunction* function);
+  void exitFunction();
+  uint16_t currentFunctionId() const;
 
-  void enterFunction(AstFunction* function) {
-    functionIds_.push(getId(function));
-  }
+  uint16_t getId(AstFunction* function);
+  Bytecode* bytecodeByFunctionId(uint16_t id);
+  InterpreterFunction* currentFunction() const;
+  InterpreterFunction* functionById(uint16_t id) const;
 
-  void exitFunction() {
-    assert(!functionIds_.empty());
-    functionIds_.pop();
-  }
+  void enterScope(Scope* scope);
+  void exitScope();
+  Scope* currentScope() const;
 
-  uint16_t getId(AstFunction* function) {
-    IdByFunctionMap::iterator it = idByFunction_.find(function);
-    assert(it != idByFunction_.end());
-    return it->second;
-  }
-
-  uint16_t currentFunctionId() const {
-    assert(!functionIds_.empty());
-    return functionIds_.top();
-  }
-
-  void enterScope(Scope* scope) {
-    scopes_.push(scope);
-  }
-
-  void exitScope() {
-    assert(!scopes_.empty());
-    scopes_.pop();
-  }
-
-  Scope* currentScope() const {
-    assert(!scopes_.empty());
-    return scopes_.top();
-  }
-
-  Bytecode* bytecodeByFunctionId(uint16_t id) {
-    BytecodeFunction* function = functionById(id);
-    return (function == NULL) ? NULL : function->bytecode();
-  }
-
-  InterpreterFunction* currentFunction() const {
-    return functionById(currentFunctionId());
-  }
-
-  InterpreterFunction* functionById(uint16_t id) const {
-    return code_->functionById(id);
-  }
-
-  uint16_t makeStringConstant(const std::string& string) {
-    return code_->makeStringConstant(string);
-  }
-
-  void declare(AstVar* var) {
-    InterpreterFunction* function = currentFunction();
-    uint16_t functionId = function->id();
-    uint16_t localsNumber = static_cast<uint16_t>(function->localsNumber());
-    VarInfo* info = new VarInfo(functionId, localsNumber++);
-    function->setLocalsNumber(localsNumber);
-    var->setInfo(info);
-    varInfos_.push_back(info);
-  }
+  uint16_t makeStringConstant(const std::string& string);
+  void declare(AstVar* var);
 };
 
 } // namespace mathvm
