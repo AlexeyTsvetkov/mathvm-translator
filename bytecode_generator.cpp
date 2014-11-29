@@ -86,7 +86,17 @@ void BytecodeGenerator::visit(BlockNode* block) {
   Scope* scope = block->scope();
   ctx()->enterScope(scope);
   visit(scope);
-  block->visitChildren(this);
+  
+  for (uint32_t i = 0; i < block->nodes(); ++i) {
+    AstNode* statement = block->nodeAt(i);
+    statement->visit(this);
+    if (report()->isError()) return;
+
+    if (hasNonEmptyStack(statement)) {
+      bc()->addInsn(BC_POP);
+    } 
+  }
+
   ctx()->exitScope();
 }
 

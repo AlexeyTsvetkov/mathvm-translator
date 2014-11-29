@@ -14,7 +14,7 @@ class TypeInfo {
 
 public:
   TypeInfo(VarType type): type_(type) {}
-  VarType type() { return type_; }
+  VarType type() const { return type_; }
 };
 
 class VarInfo {
@@ -26,9 +26,9 @@ public:
     : functionId_(functionId),
       localId_(localId) {} 
 
-  uint16_t functionId() { return functionId_; }
+  uint16_t functionId() const { return functionId_; }
 
-  uint16_t localId() { return localId_; }
+  uint16_t localId() const { return localId_; }
 };
 
 template<typename InfoT>
@@ -37,7 +37,7 @@ InfoT* getInfo(const CustomDataHolder* dataHolder) {
 }
 
 void setType(CustomDataHolder* dataHolder, VarType type);
-VarType typeOf(CustomDataHolder* dataHolder);
+VarType typeOf(const CustomDataHolder* dataHolder);
 
 } // namespace mathvm
 #endif

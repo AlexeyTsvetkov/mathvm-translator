@@ -32,7 +32,7 @@ void setType(CustomDataHolder* dataHolder, VarType type) {
   dataHolder->setInfo(info);
 }
 
-VarType typeOf(CustomDataHolder* dataHolder) {
+VarType typeOf(const CustomDataHolder* dataHolder) {
   return getInfo<TypeInfo>(dataHolder)->type();
 } 
 
