@@ -106,7 +106,20 @@ void BytecodeGenerator::visit(BlockNode* block) {
 void BytecodeGenerator::visit(NativeCallNode* node) { node->visitChildren(this); }
 void BytecodeGenerator::visit(ForNode* node) { node->visitChildren(this); }
 void BytecodeGenerator::visit(IfNode* node) { node->visitChildren(this); }
-void BytecodeGenerator::visit(WhileNode* node) { node->visitChildren(this); }
+
+void BytecodeGenerator::visit(WhileNode* node) { 
+  Label begin(bc());
+  Label end(bc());
+  bc()->bind(begin);
+  node->whileExpr()->visit(this);
+
+  bc()->addInsn(BC_ILOAD0);
+  bc()->addBranch(BC_IFICMPE, end);
+  node->loopBlock()->visit(this);
+
+  bc()->addBranch(BC_JA, begin);
+  bc()->bind(end);
+}
 
 void BytecodeGenerator::visit(LoadNode* node) { 
   uint16_t localId;
