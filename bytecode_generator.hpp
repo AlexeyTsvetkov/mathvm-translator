@@ -44,7 +44,6 @@ namespace mathvm {
     void arithmeticOp(BinaryOpNode* op);
     VarType castOperandsNumeric(BinaryOpNode* op);
     void readVarInfo(const AstVar* var, uint16_t& localId, uint16_t& context);
-    void loadVar(VarType type, uint16_t localId, uint16_t context, AstNode* node);
     void parameters(AstFunction* function);
 
     Bytecode* bc() {

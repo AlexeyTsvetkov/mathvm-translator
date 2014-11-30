@@ -49,6 +49,37 @@ bool hasNonEmptyStack(const AstNode* node) {
          || node->isLoadNode();
 }
 
+
+static void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode* bc, AstNode* at);
+
+void loadVar(LoadNode* node, uint16_t localId, uint16_t context, Bytecode* bc) {
+  loadVarImpl(node->var(), localId, context, bc, node);
+}
+
+void loadVar(StoreNode* node, uint16_t localId, uint16_t context, Bytecode* bc) {
+  loadVarImpl(node->var(), localId, context, bc, node);
+}
+
+void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode* bc, AstNode* at) {
+  VarType type = var->type();
+
+  if (!isNumeric(type)) {
+    throw TranslationException(at, "Wrong var reference type (only numbers are supported)");
+  }
+
+  bool isInt = type == VT_INT;
+
+  if (context != 0) {
+    bc->addInsn(isInt ? BC_LOADCTXIVAR : BC_LOADCTXDVAR);
+    bc->addUInt16(context);
+  } else {
+    bc->addInsn(isInt ? BC_LOADIVAR : BC_LOADDVAR);
+  }
+  
+  bc->addUInt16(localId);
+}
+
+
 static void castImpl(VarType from, VarType to, Bytecode* bc, AstNode* node);
 
 void cast(AstNode* expr, VarType to, Bytecode* bc) {

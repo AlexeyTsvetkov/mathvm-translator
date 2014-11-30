@@ -126,40 +126,12 @@ void BytecodeGenerator::readVarInfo(const AstVar* var, uint16_t& localId, uint16
   } 
 }
 
-void BytecodeGenerator::loadVar(VarType type, uint16_t localId, uint16_t context, AstNode* node) {
-  switch (type) {
-    case VT_INT:
-      if (context != 0) {
-        bc()->addInsn(BC_LOADCTXIVAR);
-        bc()->addUInt16(context);
-      } else {
-        bc()->addInsn(BC_LOADIVAR);
-      }
-      
-      bc()->addUInt16(localId);
-      break;
-    case VT_DOUBLE:
-      if (context != 0) {
-        bc()->addInsn(BC_LOADCTXDVAR);
-        bc()->addUInt16(context);
-      } else {
-        bc()->addInsn(BC_LOADDVAR);
-      }
-      
-      bc()->addUInt16(localId);
-      break;
-    default:
-      throw TranslationException(node, "Wrong var reference type (only numbers are supported)");
-  }
-}
-
 void BytecodeGenerator::visit(LoadNode* node) { 
-  const AstVar* var = node->var();
   uint16_t localId;
   uint16_t context;
-  readVarInfo(var, localId, context);
-  loadVar(var->type(), localId, context, node);
-  setType(node, var->type());
+  readVarInfo(node->var(), localId, context);
+  loadVar(node, localId, context, bc());
+  setType(node, node->var()->type());
 }
 
 void BytecodeGenerator::visit(StoreNode* node) { 
@@ -194,7 +166,7 @@ void BytecodeGenerator::visit(StoreNode* node) {
   }
 
   if (node->op() != tASSIGN) {
-    loadVar(type, localId, context, node);
+    loadVar(node, localId, context, bc());
   }
 
   switch (node->op()) {
