@@ -3,6 +3,7 @@
 
 #include "mathvm.h"
 #include "interpreter_code.hpp"
+#include "utils.hpp"
 
 #include <stdint.h>
 #include <cassert>
@@ -64,9 +65,22 @@ private:
 
   template<typename T>
   void load() {
-    T val = bc()->getTyped<T>(ins_);
+    T val = readFromBc<T>();
     ins_ += sizeof(T);
     push<T>(val);
+  }
+
+  template<typename T>
+  T readFromBc() {
+    T val = bc()->getTyped<T>(ins_);
+    return val;
+  }
+
+  void swap() {
+    int64_t upper = pop<int64_t>();
+    int64_t lower = pop<int64_t>();
+    push(upper);
+    push(lower);
   }
 };
 

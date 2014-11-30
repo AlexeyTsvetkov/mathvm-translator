@@ -7,7 +7,17 @@
   type upper = pop<type>();   \
   type lower = pop<type>();   \
   push<type>(upper op lower); \
-}                              
+}
+
+#define CMP_OP(op, ip, off_t) {     \
+  int64_t upper = pop<int64_t>();   \
+  int64_t lower = pop<int64_t>();   \
+  if (upper op lower) {             \
+    ip += readFromBc<off_t>();      \
+  } else {                          \
+    ip += sizeof(off_t);            \
+  }                                 \
+}                                
 
 namespace mathvm {
 
@@ -46,19 +56,28 @@ void BytecodeInterpreter::execute() {
       case BC_IAAND: BIN_OP(int64_t, &); break;
       case BC_IAXOR: BIN_OP(int64_t, ^); break;
 
+      case BC_DCMP: 
+        swap();
+        BIN_OP(double, -); 
+        push((int64_t) pop<double>()); 
+        break;
+      case BC_ICMP: swap(); BIN_OP(int64_t, -); break;
+
       case BC_I2D: push((double)  pop<int64_t>()); break;
       case BC_D2I: push((int64_t) pop<double>()); break;
 
       case BC_DNEG: push(-pop<double>()); break;
       case BC_INEG: push(-pop<int64_t>()); break;
 
-      case BC_SWAP: {
-        int64_t upper = pop<int64_t>();
-        int64_t lower = pop<int64_t>();
-        push(upper);
-        push(lower);
-        break;
-      }
+      case BC_JA: ins_ += readFromBc<int16_t>(); break;
+      case BC_IFICMPNE: CMP_OP(!=, ins_, int16_t); break;
+      case BC_IFICMPE:  CMP_OP(==, ins_, int16_t); break;
+      case BC_IFICMPG:  CMP_OP(>,  ins_, int16_t); break;
+      case BC_IFICMPGE: CMP_OP(>=, ins_, int16_t); break;
+      case BC_IFICMPL:  CMP_OP(<,  ins_, int16_t); break;
+      case BC_IFICMPLE: CMP_OP(<=, ins_, int16_t); break;
+
+      case BC_SWAP: swap(); break;
 
       case BC_POP: remove(); break;
       

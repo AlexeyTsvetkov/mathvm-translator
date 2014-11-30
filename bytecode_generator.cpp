@@ -434,10 +434,10 @@ void BytecodeGenerator::comparisonOp(BinaryOpNode* op) {
   switch (op->kind()) {
     case tEQ:  cmpi = BC_IFICMPE;  break;
     case tNEQ: cmpi = BC_IFICMPNE; break;
-    case tGT:  cmpi = BC_IFICMPG;  break;
-    case tGE:  cmpi = BC_IFICMPGE; break;
-    case tLT:  cmpi = BC_IFICMPL;  break;
-    case tLE:  cmpi = BC_IFICMPLE; break;
+    case tGT:  cmpi = BC_IFICMPL;  break;
+    case tGE:  cmpi = BC_IFICMPLE; break;
+    case tLT:  cmpi = BC_IFICMPG;  break;
+    case tLE:  cmpi = BC_IFICMPGE; break;
     default:
       throw TranslationException(op, "Unknown comparison operator");
   }
