@@ -421,6 +421,8 @@ void BytecodeGenerator::bitwiseOp(BinaryOpNode* op) {
     default:
       throw TranslationException(op, "Unknown bitwise binary operator");
   } 
+
+  setType(op, VT_INT);
 }
 
 void BytecodeGenerator::comparisonOp(BinaryOpNode* op) {
@@ -466,7 +468,7 @@ void BytecodeGenerator::arithmeticOp(BinaryOpNode* op) {
   if (op->kind() == tSUB || op->kind() == tMOD || op->kind() == tDIV) {
     bc()->addInsn(BC_SWAP);
   }
-  
+
   switch (op->kind()) {
     case tADD: insn = isInt ? BC_IADD : BC_DADD; break;
     case tSUB: insn = isInt ? BC_ISUB : BC_DSUB; break;

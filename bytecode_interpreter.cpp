@@ -42,6 +42,12 @@ void BytecodeInterpreter::execute() {
       case BC_IMUL: BIN_OP(int64_t, *); break;
       case BC_IDIV: BIN_OP(int64_t, /); break;
       case BC_IMOD: BIN_OP(int64_t, %); break;
+      case BC_IAOR: BIN_OP(int64_t, |); break;
+      case BC_IAAND: BIN_OP(int64_t, &); break;
+      case BC_IAXOR: BIN_OP(int64_t, ^); break;
+
+      case BC_DNEG: push(-pop<double>()); break;
+      case BC_INEG: push(-pop<int64_t>()); break;
 
       case BC_SWAP: {
         int64_t upper = pop<int64_t>();
