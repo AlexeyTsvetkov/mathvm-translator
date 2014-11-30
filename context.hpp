@@ -31,6 +31,7 @@ public:
   ~Context();
 
   void addFunction(AstFunction* function);
+  uint16_t addNativeFunction(const string& name, const Signature& signature, const void* address);
   void enterFunction(AstFunction* function);
   void exitFunction();
   uint16_t currentFunctionId() const;

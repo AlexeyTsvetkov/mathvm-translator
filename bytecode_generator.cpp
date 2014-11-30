@@ -102,7 +102,11 @@ void BytecodeGenerator::visit(BlockNode* block) {
   ctx()->exitScope();
 }
 
-void BytecodeGenerator::visit(NativeCallNode* node) { node->visitChildren(this); }
+void BytecodeGenerator::visit(NativeCallNode* node) { 
+  uint16_t id = ctx()->addNativeFunction(node->nativeName(), node->nativeSignature(), 0);
+  bc()->addInsn(BC_CALLNATIVE);
+  bc()->addUInt16(id);
+}
 
 void BytecodeGenerator::storeInt(AstNode* expr, uint16_t localId, uint16_t localContext) {
   expr->visit(this);

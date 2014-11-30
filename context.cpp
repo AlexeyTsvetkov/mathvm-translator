@@ -14,6 +14,10 @@ void Context::addFunction(AstFunction* function) {
   idByFunction_.insert(std::make_pair(function, id));
 }
 
+uint16_t Context::addNativeFunction(const string& name, const Signature& signature, const void* address) {
+  return code_->makeNativeFunction(name, signature, address);
+}
+
 void Context::enterFunction(AstFunction* function) {
   functionIds_.push(getId(function));
 }
