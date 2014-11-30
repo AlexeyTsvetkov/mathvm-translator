@@ -37,16 +37,13 @@ bool isNumeric(VarType type) {
 }
 
 bool hasNonEmptyStack(const AstNode* node) {
-  if (node->isCallNode()) {
-    return typeOf(node) != VT_VOID;
-  }
-
   return node->isBinaryOpNode() 
          || node->isUnaryOpNode()
          || node->isStringLiteralNode()
          || node->isDoubleLiteralNode()
          || node->isIntLiteralNode()
-         || node->isLoadNode();
+         || node->isLoadNode()
+         || node->isCallNode();
 }
 
 void readVarInfo(const AstVar* var, uint16_t& localId, uint16_t& localContext, Context* ctx) {

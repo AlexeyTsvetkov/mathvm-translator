@@ -23,9 +23,11 @@ namespace mathvm {
 
 void BytecodeInterpreter::execute() {
   while (ins_ < bc()->length()) {
-    switch (bc()->getInsn(ins_++)) {
+    Instruction bci = bc()->getInsn(ins_++);
+
+    switch (bci) {
       case BC_INVALID: 
-        throw InterpreterException("Encountered invalid instruction");
+        throw InterpreterException("Not implemented bytecode: %s", bytecodeName(bci, 0));
       
       case BC_ILOAD0: push<int64_t>(0); break;      
       case BC_ILOAD1: push<int64_t>(1); break;      
@@ -77,10 +79,36 @@ void BytecodeInterpreter::execute() {
       case BC_IFICMPL:  CMP_OP(<,  ins_, int16_t); break;
       case BC_IFICMPLE: CMP_OP(<=, ins_, int16_t); break;
 
-      case BC_SWAP: swap(); break;
+      case BC_LOADIVAR: 
+        loadVar<int64_t>(readFromBcAndShift<uint16_t>(), 0); 
+        break;
+      case BC_LOADDVAR: 
+        loadVar<double>(readFromBcAndShift<uint16_t>(), 0); 
+        break;
+      case BC_LOADCTXIVAR: 
+        loadVar<int64_t>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>()); 
+        break;
+      case BC_LOADCTXDVAR: 
+        loadVar<double>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>()); 
+        break;
 
+      case BC_STOREIVAR: 
+        storeVar<int64_t>(readFromBcAndShift<uint16_t>(), 0, pop<int64_t>()); 
+        break;
+      case BC_STOREDVAR: 
+        storeVar<double>(readFromBcAndShift<uint16_t>(), 0, pop<double>()); 
+        break;
+      case BC_STORECTXIVAR: 
+        storeVar<int64_t>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>(), pop<int64_t>()); 
+        break;
+      case BC_STORECTXDVAR: 
+        storeVar<double>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>(), pop<double>()); 
+        break;
+
+      case BC_CALL: callFunction(readFromBcAndShift<uint16_t>()); break;
+      case BC_RETURN: returnFunction(); break;
+      case BC_SWAP: swap(); break;
       case BC_POP: remove(); break;
-      
       case BC_STOP: return;
       
       default: throw InterpreterException("Not implemented instruction");

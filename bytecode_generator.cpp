@@ -235,6 +235,8 @@ void BytecodeGenerator::visit(ReturnNode* node) {
   if (returnExpr) {
     returnExpr->visit(this);
     cast(returnExpr, ctx()->currentFunction()->returnType(), bc());
+  } else {
+    bc()->addInsn(BC_ILOAD0);
   }
 
   bc()->addInsn(BC_RETURN); 
