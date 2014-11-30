@@ -65,6 +65,13 @@ uint16_t Context::makeStringConstant(const std::string& string) {
   return code_->makeStringConstant(string);
 }
 
+uint16_t Context::declareTemporary() {
+  InterpreterFunction* function = currentFunction();
+  uint16_t localsNumber = static_cast<uint16_t>(function->localsNumber());
+  function->setLocalsNumber(localsNumber + 1);
+  return localsNumber;
+}
+
 void Context::declare(AstVar* var) {
   InterpreterFunction* function = currentFunction();
   uint16_t functionId = function->id();

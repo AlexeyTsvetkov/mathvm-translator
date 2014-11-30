@@ -67,23 +67,8 @@ void readVarInfo(const AstVar* var, uint16_t& localId, uint16_t& localContext, C
   } 
 }
 
-static void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode* bc, AstNode* at);
-
-void loadVar(LoadNode* node, uint16_t localId, uint16_t context, Bytecode* bc) {
-  loadVarImpl(node->var(), localId, context, bc, node);
-}
-
-void loadVar(StoreNode* node, uint16_t localId, uint16_t context, Bytecode* bc) {
-  loadVarImpl(node->var(), localId, context, bc, node);
-}
-
-void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode* bc, AstNode* at) {
-  VarType type = var->type();
-
-  if (!isNumeric(type)) {
-    throw TranslationException(at, "Wrong var reference type (only numbers are supported)");
-  }
-
+void loadVar(VarType type, uint16_t localId, uint16_t context, Bytecode* bc) {
+  assert(isNumeric(type));
   bool isInt = type == VT_INT;
 
   if (context != 0) {
@@ -94,6 +79,24 @@ void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode
   }
   
   bc->addUInt16(localId);
+}
+
+static void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode* bc, AstNode* at) {
+  VarType type = var->type();
+
+  if (!isNumeric(type)) {
+    throw TranslationException(at, "Wrong var reference type (only numbers are supported)");
+  }
+
+  loadVar(type, localId, context, bc);
+}
+
+void loadVar(LoadNode* node, uint16_t localId, uint16_t context, Bytecode* bc) {
+  loadVarImpl(node->var(), localId, context, bc, node);
+}
+
+void loadVar(StoreNode* node, uint16_t localId, uint16_t context, Bytecode* bc) {
+  loadVarImpl(node->var(), localId, context, bc, node);
 }
 
 void storeVar(VarType type, uint16_t localId, uint16_t localContext, TokenKind op, Bytecode* bc) {

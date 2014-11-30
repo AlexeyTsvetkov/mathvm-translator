@@ -45,6 +45,7 @@ public:
   Scope* currentScope() const;
 
   uint16_t makeStringConstant(const std::string& string);
+  uint16_t declareTemporary();
   void declare(AstVar* var);
 };
 

@@ -48,7 +48,6 @@ void BytecodeGenerator::parameters(AstFunction* function) {
       case VT_DOUBLE: insn = BC_STOREDVAR; break;
       default:
         throw TranslationException(node, "Illegal parameter type (int/double expected)");
-        return;
     }
 
     bc()->addInsn(insn);
@@ -104,7 +103,51 @@ void BytecodeGenerator::visit(BlockNode* block) {
 }
 
 void BytecodeGenerator::visit(NativeCallNode* node) { node->visitChildren(this); }
-void BytecodeGenerator::visit(ForNode* node) { node->visitChildren(this); }
+
+void BytecodeGenerator::storeInt(AstNode* expr, uint16_t localId, uint16_t localContext) {
+  expr->visit(this);
+  cast(expr, VT_INT, bc());
+  storeVar(VT_INT, localId, localContext, tASSIGN, bc());
+}
+
+void BytecodeGenerator::visit(ForNode* node) { 
+  const AstVar* var = node->var();
+  AstNode* inExpr = node->inExpr();
+  BinaryOpNode* range;
+
+  if (var->type() != VT_INT) {
+    throw TranslationException(node, "Illegal for iteration variable type: %s", 
+                               typeToName(var->type()));
+  }
+
+  if (!inExpr->isBinaryOpNode() || static_cast<BinaryOpNode*>(inExpr)->kind() != tRANGE) {
+    throw TranslationException(node, "For statement expects range");
+  } else {
+    range = static_cast<BinaryOpNode*>(inExpr);
+  }
+
+  uint16_t varId;
+  uint16_t varContext;
+  uint16_t endId = ctx()->declareTemporary();
+  Label begin(bc());
+  Label end(bc());
+
+  readVarInfo(var, varId, varContext, ctx());
+  storeInt(range->left(), varId, varContext);
+  storeInt(range->right(), endId, 0);
+  
+  bc()->bind(begin);
+  loadVar(VT_INT, varId, varContext, bc());
+  loadVar(VT_INT, endId, 0, bc());
+  bc()->addBranch(BC_IFICMPL, end);
+  node->body()->visit(this);
+
+  bc()->addInsn(BC_ILOAD1);
+  loadVar(VT_INT, varId, varContext, bc());
+  storeVar(VT_INT, varId, varContext, tINCRSET, bc());
+  bc()->addBranch(BC_JA, begin);
+  bc()->bind(end);
+}
 
 void BytecodeGenerator::visit(IfNode* node) { 
   Label otherwise(bc());
