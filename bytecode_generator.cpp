@@ -108,28 +108,10 @@ void BytecodeGenerator::visit(ForNode* node) { node->visitChildren(this); }
 void BytecodeGenerator::visit(IfNode* node) { node->visitChildren(this); }
 void BytecodeGenerator::visit(WhileNode* node) { node->visitChildren(this); }
 
-void BytecodeGenerator::readVarInfo(const AstVar* var, uint16_t& localId, uint16_t& context) {
-  VarInfo* info = getInfo<VarInfo>(var);
-  uint16_t varFunctionId = info->functionId();
-  uint16_t curFunctionId = ctx()->currentFunctionId();
-  localId = info->localId();
-  context = 0;
-
-  if (varFunctionId != curFunctionId) {
-    InterpreterFunction* varFunction = ctx()->functionById(varFunctionId);
-    InterpreterFunction* curFunction = ctx()->functionById(curFunctionId);
-
-    int32_t varFunctionDeep = varFunction->deepness();
-    int32_t curFunctionDeep = curFunction->deepness();
-    // var function deepness always >= current function deepness
-    context = static_cast<uint16_t>(curFunctionDeep - varFunctionDeep);
-  } 
-}
-
 void BytecodeGenerator::visit(LoadNode* node) { 
   uint16_t localId;
   uint16_t context;
-  readVarInfo(node->var(), localId, context);
+  readVarInfo(node->var(), localId, context, ctx());
   loadVar(node, localId, context, bc());
   setType(node, node->var()->type());
 }
@@ -145,7 +127,7 @@ void BytecodeGenerator::visit(StoreNode* node) {
 
   uint16_t localId;
   uint16_t context;
-  readVarInfo(var, localId, context);
+  readVarInfo(var, localId, context, ctx());
   bool isInt = type == VT_INT;
 
   switch (typeOf(node->value())) {

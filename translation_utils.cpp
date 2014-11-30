@@ -49,6 +49,23 @@ bool hasNonEmptyStack(const AstNode* node) {
          || node->isLoadNode();
 }
 
+void readVarInfo(const AstVar* var, uint16_t& localId, uint16_t& localContext, Context* ctx) {
+  VarInfo* info = getInfo<VarInfo>(var);
+  uint16_t varFunctionId = info->functionId();
+  uint16_t curFunctionId = ctx->currentFunctionId();
+  localId = info->localId();
+  localContext = 0;
+
+  if (varFunctionId != curFunctionId) {
+    InterpreterFunction* varFunction = ctx->functionById(varFunctionId);
+    InterpreterFunction* curFunction = ctx->functionById(curFunctionId);
+
+    int32_t varFunctionDeep = varFunction->deepness();
+    int32_t curFunctionDeep = curFunction->deepness();
+    // var function deepness always >= current function deepness
+    localContext = static_cast<uint16_t>(curFunctionDeep - varFunctionDeep);
+  } 
+}
 
 static void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode* bc, AstNode* at);
 
@@ -78,7 +95,6 @@ void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode
   
   bc->addUInt16(localId);
 }
-
 
 static void castImpl(VarType from, VarType to, Bytecode* bc, AstNode* node);
 

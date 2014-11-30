@@ -3,6 +3,7 @@
 
 #include "ast.h"
 #include "mathvm.h"
+#include "context.hpp"
 
 #include <string>
 
@@ -16,6 +17,7 @@ bool isTopLevel(FunctionNode* function);
 bool isNumeric(VarType type);
 bool hasNonEmptyStack(const AstNode* node);
 
+void readVarInfo(const AstVar* var, uint16_t& localId, uint16_t& localContext, Context* ctx);
 void loadVar(LoadNode* node, uint16_t localId, uint16_t context, Bytecode* bc);
 void loadVar(StoreNode* node, uint16_t localId, uint16_t context, Bytecode* bc);
 void cast(AstNode* expr, VarType to, Bytecode* bc);
