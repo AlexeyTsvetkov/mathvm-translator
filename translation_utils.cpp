@@ -49,4 +49,22 @@ bool hasNonEmptyStack(const AstNode* node) {
          || node->isLoadNode();
 }
 
+static void castImpl(VarType from, VarType to, Bytecode* bc, AstNode* node);
+
+void cast(AstNode* expr, VarType to, Bytecode* bc) {
+  VarType from = typeOf(expr);
+  castImpl(from, to, bc, expr);
+}
+
+void castImpl(VarType from, VarType to, Bytecode* bc, AstNode* node) {
+  if (from == VT_DOUBLE && to == VT_INT) {
+    bc->addInsn(BC_D2I);
+  } else if (from == VT_INT && to == VT_DOUBLE) {
+    bc->addInsn(BC_I2D);
+  } else if (from != to) {
+    throw TranslationException(node, "Illegal type: expected -- %s, actual -- %s", 
+                               typeToName(to), typeToName(from));
+  }
+}
+
 } // namespace mathvm

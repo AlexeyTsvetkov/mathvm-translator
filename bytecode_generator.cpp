@@ -230,23 +230,14 @@ void BytecodeGenerator::visit(PrintNode* node) {
   }
 }
 
-void BytecodeGenerator::cast(VarType from, VarType to, AstNode* node) {
-  if (from == VT_DOUBLE && to == VT_INT) {
-    bc()->addInsn(BC_D2I);
-  } else if (from == VT_INT && to == VT_DOUBLE) {
-    bc()->addInsn(BC_I2D);
-  } else if (from != to) {
-    throw TranslationException(node, "Wrong return type");
-  }
-}
-
 void BytecodeGenerator::visit(ReturnNode* node) { 
-  node->visitChildren(this);
-  
   AstNode* returnExpr = node->returnExpr();
-  VarType returnType = returnExpr == NULL ? VT_VOID : typeOf(returnExpr);
-  VarType expectedType = ctx()->currentFunction()->returnType();
-  cast(returnType, expectedType, node);
+  
+  if (returnExpr) {
+    returnExpr->visit(this);
+    cast(returnExpr, ctx()->currentFunction()->returnType(), bc());
+  }
+
   bc()->addInsn(BC_RETURN); 
 }
 
@@ -260,8 +251,7 @@ void BytecodeGenerator::visit(CallNode* node) {
   for (uint32_t i = 0; i < node->parametersNumber(); ++i) {
     AstNode* argument = node->parameterAt(i);
     argument->visit(this);
-    
-    cast(typeOf(argument), function->parameterType(i), argument);
+    cast(argument, function->parameterType(i), bc());
   }  
 
   bc()->addInsn(BC_CALL);

@@ -16,6 +16,8 @@ bool isTopLevel(FunctionNode* function);
 bool isNumeric(VarType type);
 bool hasNonEmptyStack(const AstNode* node);
 
+void cast(AstNode* expr, VarType to, Bytecode* bc);
+
 } // namespace mathvm
 
 #endif
