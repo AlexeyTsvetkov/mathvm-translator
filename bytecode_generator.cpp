@@ -117,54 +117,22 @@ void BytecodeGenerator::visit(LoadNode* node) {
 }
 
 void BytecodeGenerator::visit(StoreNode* node) { 
-  node->visitChildren(this); 
-  
   const AstVar* var = node->var();
-  VarType type = var->type();
-  if (!isNumeric(type)) {
-    throw TranslationException(node, "Variable can`t have not-numeric type");
-  }
+  AstNode* value = node->value();
+  TokenKind op = node->op();
+
+  value->visit(this); 
 
   uint16_t localId;
-  uint16_t context;
-  readVarInfo(var, localId, context, ctx());
-  bool isInt = type == VT_INT;
+  uint16_t localContext;
+  readVarInfo(var, localId, localContext, ctx());
+  cast(value, var->type(), bc());
 
-  switch (typeOf(node->value())) {
-    case VT_INT:
-      if (!isInt) {
-        bc()->addInsn(BC_D2I);
-      };
-
-      break;
-    case VT_DOUBLE:
-      if (isInt) {
-        bc()->addInsn(BC_I2D);
-      }
-
-      break;
-    default:
-      throw TranslationException(node, "Wrong RHS type");
+  if (op == tINCRSET || op == tDECRSET) {
+    loadVar(node, localId, localContext, bc());
   }
 
-  if (node->op() != tASSIGN) {
-    loadVar(node, localId, context, bc());
-  }
-
-  switch (node->op()) {
-    case tINCRSET: bc()->addInsn(isInt ? BC_IADD : BC_DADD); break;
-    case tDECRSET: bc()->addInsn(isInt ? BC_ISUB : BC_DSUB); break;
-    default: break; 
-  }
-
-  if (context != 0) {
-    bc()->addInsn(isInt ? BC_STORECTXIVAR : BC_STORECTXDVAR);
-    bc()->addUInt16(context);
-  } else {
-    bc()->addInsn(isInt ? BC_STOREIVAR : BC_STOREDVAR);
-  }
-
-  bc()->addUInt16(localId);
+  storeVar(var->type(), localId, localContext, op, bc());
 }
 
 void BytecodeGenerator::visit(PrintNode* node) { 

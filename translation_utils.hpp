@@ -20,6 +20,7 @@ bool hasNonEmptyStack(const AstNode* node);
 void readVarInfo(const AstVar* var, uint16_t& localId, uint16_t& localContext, Context* ctx);
 void loadVar(LoadNode* node, uint16_t localId, uint16_t context, Bytecode* bc);
 void loadVar(StoreNode* node, uint16_t localId, uint16_t context, Bytecode* bc);
+void storeVar(VarType type, uint16_t localId, uint16_t localContext, TokenKind op, Bytecode* bc);
 void cast(AstNode* expr, VarType to, Bytecode* bc);
 
 } // namespace mathvm

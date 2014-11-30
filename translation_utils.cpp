@@ -96,6 +96,25 @@ void loadVarImpl(const AstVar* var, uint16_t localId, uint16_t context, Bytecode
   bc->addUInt16(localId);
 }
 
+void storeVar(VarType type, uint16_t localId, uint16_t localContext, TokenKind op, Bytecode* bc) {
+  bool isInt = type == VT_INT;
+
+  switch (op) {
+    case tINCRSET: bc->addInsn(isInt ? BC_IADD : BC_DADD); break;
+    case tDECRSET: bc->addInsn(isInt ? BC_ISUB : BC_DSUB); break;
+    default: break;
+  }
+
+  if (localContext != 0) {
+    bc->addInsn(isInt ? BC_STORECTXIVAR : BC_STORECTXDVAR);
+    bc->addUInt16(localContext);
+  } else {
+    bc->addInsn(isInt ? BC_STOREIVAR : BC_STOREDVAR);
+  }
+
+  bc->addUInt16(localId);
+}
+
 static void castImpl(VarType from, VarType to, Bytecode* bc, AstNode* node);
 
 void cast(AstNode* expr, VarType to, Bytecode* bc) {
