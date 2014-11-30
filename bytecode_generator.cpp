@@ -219,7 +219,6 @@ void BytecodeGenerator::visit(BinaryOpNode* op) {
 void BytecodeGenerator::visit(UnaryOpNode* op) { 
   op->visitChildren(this);
   
-  
   switch (op->kind()) {
     case tSUB: negOp(op); break;
     case tNOT: notOp(op); break;
@@ -327,7 +326,6 @@ TokenKind token = op->kind();
 
 void BytecodeGenerator::bitwiseOp(BinaryOpNode* op) {
   op->visitChildren(this);
-
   
   if (typeOf(op->left()) != VT_INT || typeOf(op->right()) != VT_INT) {
     throw TranslationException(op, "Bitwise operator is only applicable to int operands");
