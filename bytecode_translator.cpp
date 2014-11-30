@@ -21,7 +21,7 @@ Status* BytecodeTranslatorImpl::translate(
     return status;
   }
 
-  code->disassemble();
+  //code->disassemble();
   assert(code != 0);
   *result = code;
 

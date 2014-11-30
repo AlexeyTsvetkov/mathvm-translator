@@ -463,6 +463,10 @@ void BytecodeGenerator::arithmeticOp(BinaryOpNode* op) {
   bool isInt = operandsCommonType == VT_INT;
   Instruction insn = BC_INVALID;
 
+  if (op->kind() == tSUB || op->kind() == tMOD || op->kind() == tDIV) {
+    bc()->addInsn(BC_SWAP);
+  }
+  
   switch (op->kind()) {
     case tADD: insn = isInt ? BC_IADD : BC_DADD; break;
     case tSUB: insn = isInt ? BC_ISUB : BC_DSUB; break;

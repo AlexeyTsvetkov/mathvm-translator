@@ -39,4 +39,11 @@ TranslationException::TranslationException(const AstNode* at, const char* format
     va_end(args);
 }
 
+InterpreterException::InterpreterException(const char* format, ...) {
+  va_list args;
+  va_start(args, format);
+  vsnprintf(message_, constant::MAX_ERROR_MSG_LEN, format, args);
+  va_end(args);
+}
+
 } // namespace mathvm

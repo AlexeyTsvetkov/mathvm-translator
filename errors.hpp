@@ -32,6 +32,17 @@ public:
   }
 };
 
+class InterpreterException : public std::exception {
+  char message_[constant::MAX_ERROR_MSG_LEN];
+
+public:
+  InterpreterException(const char* format, ...);
+
+  virtual const char* what() const throw() {
+    return message_;
+  }
+};
+
 } // namespace mathvm
 
 #endif

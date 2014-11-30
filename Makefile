@@ -15,7 +15,8 @@ USER_OBJ = \
    $(OBJ)/errors$(OBJ_SUFF) \
    $(OBJ)/translation_utils$(OBJ_SUFF) \
    $(OBJ)/bytecode_generator$(OBJ_SUFF) \
-   $(OBJ)/bytecode_translator$(OBJ_SUFF)
+   $(OBJ)/bytecode_translator$(OBJ_SUFF) \
+   $(OBJ)/bytecode_interpreter$(OBJ_SUFF)
 
 include $(VM_ROOT)/common.mk
 

@@ -1,5 +1,7 @@
-#include "mathvm.h"
+#include "bytecode_generator.hpp"
+#include "bytecode_interpreter.hpp"
 #include "errors.hpp"
+#include "mathvm.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -64,6 +66,14 @@ int main(int argc, char** argv) {
     cerr << errorMessage(program.c_str(), translateStatus) << endl;
     return EXIT_FAILURE;
   }
+
+  try {
+    BytecodeInterpreter vm(code);
+    vm.execute();
+  } catch (InterpreterException& e) {
+    cerr << e.what() << endl;
+    return EXIT_FAILURE;
+  } 
 
   if (code) {
     delete code;
