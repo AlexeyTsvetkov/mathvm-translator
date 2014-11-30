@@ -1,4 +1,5 @@
 #include "mathvm.h"
+#include "errors.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -50,17 +51,17 @@ int main(int argc, char** argv) {
   }
 
   Code* code = NULL;
-  Status* translateStatus = translator->translate(program, &code);
+  Status* translateStatus;
+  
+  try {
+    translateStatus = translator->translate(program, &code);
+  } catch (TranslationException& e) {
+    cerr << errorMessage(program.c_str(), e.what(), e.position()) << endl;
+    return EXIT_FAILURE;
+  } 
 
   if (translateStatus->isError()) {
-    uint32_t position = translateStatus->getPosition();
-    uint32_t line = 0, offset = 0;
-    positionToLineOffset(program, position, line, offset);
-    cerr << "Cannot translate program: "
-         << "at line: "  << line 
-         << ", offset: " << offset 
-         << ", error: "  << translateStatus->getError().c_str() 
-         << endl;
+    cerr << errorMessage(program.c_str(), translateStatus) << endl;
     return EXIT_FAILURE;
   }
 

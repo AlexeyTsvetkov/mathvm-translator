@@ -7,21 +7,28 @@
 
 namespace mathvm {
 
+namespace constant {
+  const int MAX_ERROR_MSG_LEN = 256;
+}
+
+
+std::string errorMessage(const char* program, const char* message, uint32_t position);
+std::string errorMessage(const char* program, const Status* status);
+
+
 class TranslationException : public std::exception {
-  AstNode* node_;
-  const char* message_;
+  char message_[constant::MAX_ERROR_MSG_LEN];
+  uint32_t position_;
 
 public:
-  TranslationException(const char* message, AstNode* node)
-    : node_(node),
-      message_(message) {}
+  TranslationException(const AstNode* at, const char* format, ...);
 
   virtual const char* what() const throw() {
     return message_;
   }
 
-  AstNode* at() const {
-    return node_;
+  uint32_t position() const {
+    return position_;
   }
 };
 
