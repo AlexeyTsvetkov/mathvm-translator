@@ -1,6 +1,7 @@
 #include "bytecode_generator.hpp"
 #include "errors.hpp"
 #include "info.hpp"
+#include "translation_utils.hpp"
 #include "utils.hpp"
 
 #include <iostream>
@@ -33,10 +34,12 @@ void BytecodeGenerator::parameters(AstFunction* function) {
   ctx()->enterScope(scope);
   visit(scope);
   
+  AstNode* node = function->node();
   int64_t parametersNumber = function->parametersNumber();
+
   for (int64_t i = parametersNumber - 1; i >= 0; --i) {
     const std::string& name = function->parameterName(i);
-    AstVar* param = scope->lookupVariable(name);
+    AstVar* param = findVariable(name, scope, node);
     VarInfo* info = getInfo<VarInfo>(param);
     
     Instruction insn;
@@ -44,7 +47,7 @@ void BytecodeGenerator::parameters(AstFunction* function) {
       case VT_INT:    insn = BC_STOREIVAR; break;
       case VT_DOUBLE: insn = BC_STOREDVAR; break;
       default:
-        throw TranslationException(function->node(), "Illegal parameter type (int/double expected)");
+        throw TranslationException(node, "Illegal parameter type (int/double expected)");
         return;
     }
 
@@ -248,8 +251,7 @@ void BytecodeGenerator::visit(ReturnNode* node) {
 }
 
 void BytecodeGenerator::visit(CallNode* node) { 
-  Scope* scope = ctx()->currentScope();
-  AstFunction* function = scope->lookupFunction(node->name());
+  AstFunction* function = findFunction(node->name(), ctx()->currentScope(), node);
   
   if (node->parametersNumber() != function->parametersNumber()) {
     throw TranslationException(node, "Invocation has wrong argument number");

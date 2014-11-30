@@ -13,6 +13,7 @@ USER_OBJ = \
    $(OBJ)/info$(OBJ_SUFF) \
    $(OBJ)/context$(OBJ_SUFF) \
    $(OBJ)/errors$(OBJ_SUFF) \
+   $(OBJ)/translation_utils$(OBJ_SUFF) \
    $(OBJ)/bytecode_generator$(OBJ_SUFF) \
    $(OBJ)/bytecode_translator$(OBJ_SUFF)
 
