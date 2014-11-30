@@ -105,7 +105,24 @@ void BytecodeGenerator::visit(BlockNode* block) {
 
 void BytecodeGenerator::visit(NativeCallNode* node) { node->visitChildren(this); }
 void BytecodeGenerator::visit(ForNode* node) { node->visitChildren(this); }
-void BytecodeGenerator::visit(IfNode* node) { node->visitChildren(this); }
+
+void BytecodeGenerator::visit(IfNode* node) { 
+  Label otherwise(bc());
+  Label end(bc());
+
+  node->ifExpr()->visit(this);
+  bc()->addInsn(BC_ILOAD0);
+  bc()->addBranch(BC_IFICMPE, otherwise);
+  node->thenBlock()->visit(this);
+  bc()->addBranch(BC_JA, end);
+  
+  bc()->bind(otherwise);
+  if (node->elseBlock()) {
+    node->elseBlock()->visit(this);
+  }
+  
+  bc()->bind(end);
+}
 
 void BytecodeGenerator::visit(WhileNode* node) { 
   Label begin(bc());
