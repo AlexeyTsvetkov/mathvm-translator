@@ -18,7 +18,7 @@ Translator* Translator::create(const string& impl) {
     return new BytecodeTranslatorImpl();
   } 
 
-  return NULL;
+  return 0;
 }
 
 int main(int argc, char** argv) {
@@ -45,12 +45,12 @@ int main(int argc, char** argv) {
 
   Translator* translator = Translator::create("bytecode_translator");
 
-  if (translator == NULL) { 
+  if (!translator) { 
     cerr << "Define translator impl at factory" << endl;
     return EXIT_FAILURE;
   }
 
-  Code* code = NULL;
+  Code* code = 0;
   Status* translateStatus;
   
   try {
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  if (code != NULL) {
+  if (code) {
     delete code;
   }
 

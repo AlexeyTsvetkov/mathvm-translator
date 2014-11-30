@@ -30,7 +30,7 @@ std::string errorMessage(const char* program, const Status* status) {
 }
 
 TranslationException::TranslationException(const AstNode* at, const char* format, ...) {
-    assert(at != NULL);
+    assert(at != 0);
     position_ = at->position();
 
     va_list args;

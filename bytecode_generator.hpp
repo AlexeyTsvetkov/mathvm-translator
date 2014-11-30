@@ -50,7 +50,7 @@ namespace mathvm {
     Bytecode* bc() {
       uint16_t id = ctx()->currentFunctionId();
       Bytecode* bytecode = ctx()->bytecodeByFunctionId(id);
-      assert(bytecode != NULL);
+      assert(bytecode != 0);
       return bytecode;
     }
 

@@ -50,7 +50,7 @@ Scope* Context::currentScope() const {
 
 Bytecode* Context::bytecodeByFunctionId(uint16_t id) {
   BytecodeFunction* function = functionById(id);
-  return (function == NULL) ? NULL : function->bytecode();
+  return (function == 0) ? 0 : function->bytecode();
 }
 
 InterpreterFunction* Context::currentFunction() const {

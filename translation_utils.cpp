@@ -7,7 +7,7 @@ namespace mathvm {
 AstVar* findVariable(const std::string& name, Scope* scope, AstNode* at) {
   AstVar* var = scope->lookupVariable(name);
 
-  if (var == 0) {
+  if (!var) {
     throw TranslationException(at, "Variable '%s' is not defined", name.c_str());
   }
 
@@ -17,7 +17,7 @@ AstVar* findVariable(const std::string& name, Scope* scope, AstNode* at) {
 AstFunction* findFunction(const std::string& name, Scope* scope, AstNode* at) {
   AstFunction* function = scope->lookupFunction(name);
 
-  if (function == 0) {
+  if (!function) {
     throw TranslationException(at, "Function '%s' is not defined", name.c_str());
   }
 
