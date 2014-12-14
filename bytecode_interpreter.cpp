@@ -144,6 +144,7 @@ void BytecodeInterpreter::allocFrame(uint16_t functionId, uint32_t localsNumber)
 }
 
 void BytecodeInterpreter::callFunction(uint16_t id) {
+  debug(function_->id(), "->", id);
   BytecodeFunction* called = code_->functionById(id);
   allocFrame(called->id(), called->localsNumber());
   function_ = called;
@@ -154,6 +155,7 @@ void BytecodeInterpreter::returnFunction() {
   const StackFrame& frame = frames_.back();
   instructionPointer_ = frame.instruction();
   uint16_t functionId = frame.function();
+  debug(functionId, "<-", function_->id());
   function_ = code_->functionById(functionId);
   frames_.pop_back();
 
