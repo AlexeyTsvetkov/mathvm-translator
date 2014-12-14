@@ -47,7 +47,8 @@ void BytecodeGenerator::parameters(AstFunction* function) {
       case VT_INT:    insn = BC_STOREIVAR; break;
       case VT_DOUBLE: insn = BC_STOREDVAR; break;
       default:
-        throw TranslationException(node, "Illegal parameter type (int/double expected)");
+        throw TranslationException(node, "Function %s has parameter with Illegal type: %s", 
+                                   function->name().c_str(), typeToName(param->type()));
     }
 
     bc()->addInsn(insn);
@@ -436,10 +437,10 @@ void BytecodeGenerator::comparisonOp(BinaryOpNode* op) {
   switch (op->kind()) {
     case tEQ:  cmpi = BC_IFICMPE;  break;
     case tNEQ: cmpi = BC_IFICMPNE; break;
-    case tGT:  cmpi = BC_IFICMPL;  break;
-    case tGE:  cmpi = BC_IFICMPLE; break;
-    case tLT:  cmpi = BC_IFICMPG;  break;
-    case tLE:  cmpi = BC_IFICMPGE; break;
+    case tGT:  cmpi = BC_IFICMPG;  break;
+    case tGE:  cmpi = BC_IFICMPGE; break;
+    case tLT:  cmpi = BC_IFICMPL;  break;
+    case tLE:  cmpi = BC_IFICMPLE; break;
     default:
       throw TranslationException(op, "Unknown comparison operator");
   }

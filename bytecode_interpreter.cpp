@@ -9,6 +9,14 @@
   push<type>(upper op lower); \
 }
 
+#define CMP(type) {                         \
+  type upper = pop<type>();                 \
+  type lower = pop<type>();                 \
+  if (upper == lower) push<int64_t>(0);     \
+  else if (upper < lower) push<int64_t>(-1);\
+  else push<int64_t>(1);                    \
+}
+
 #define CMP_OP(op, ip, off_t) {     \
   int64_t upper = pop<int64_t>();   \
   int64_t lower = pop<int64_t>();   \
@@ -75,12 +83,8 @@ void BytecodeInterpreter::execute() {
       case BC_IAAND: BIN_OP(int64_t, &); break;
       case BC_IAXOR: BIN_OP(int64_t, ^); break;
 
-      case BC_DCMP: 
-        swap();
-        BIN_OP(double, -); 
-        push((int64_t) pop<double>()); 
-        break;
-      case BC_ICMP: swap(); BIN_OP(int64_t, -); break;
+      case BC_DCMP: CMP(double); break;
+      case BC_ICMP: CMP(int64_t); break;
 
       case BC_I2D: push((double)  pop<int64_t>()); break;
       case BC_D2I: push((int64_t) pop<double>()); break;
