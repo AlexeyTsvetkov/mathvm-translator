@@ -10,6 +10,7 @@
 #include <cstddef>
 
 #include <algorithm>
+#include <vector>
 
 namespace mathvm {
 
@@ -24,42 +25,44 @@ class StackFrame {
   uint16_t function_;
   uint32_t instruction_;
   mem_t parentFrame_;
-  mem_t returnFrame_;
+  mem_t variablesOffset_;
 
 public:
-  StackFrame(uint16_t function, uint32_t instruction, mem_t parentFrame, mem_t returnFrame)
+  StackFrame(uint16_t function, uint32_t instruction, mem_t parentFrame, mem_t variablesOffset)
     : function_(function),
       instruction_(instruction),
       parentFrame_(parentFrame),
-      returnFrame_(returnFrame) {}
+      variablesOffset_(variablesOffset) {}
 
   StackFrame(const StackFrame& other) 
     : function_(other.function_),
       instruction_(other.instruction_),
       parentFrame_(other.parentFrame_),
-      returnFrame_(other.returnFrame_) {}
+      variablesOffset_(other.variablesOffset_) {}
 
   StackFrame& operator=(const StackFrame& other) {
     function_ = other.function_;
     instruction_ = other.instruction_;
     parentFrame_ = other.parentFrame_;
-    returnFrame_ = other.returnFrame_;
+    variablesOffset_ = other.variablesOffset_;
     return *this;
   }
 
   uint16_t function() const { return function_; }
   uint32_t instruction() const { return instruction_; }
   mem_t parentFrame() const { return parentFrame_; }
-  mem_t returnFrame() const { return returnFrame_; }
+  mem_t variablesOffset() const { return variablesOffset_; }
 };
 
 class BytecodeInterpreter {
   char* stack_;
+  std::vector<StackFrame> frames_;
+
   InterpreterCodeImpl* code_;
   BytecodeFunction* function_;
   uint32_t instructionPointer_;
-  mem_t stackPointer_;
-  mem_t stackFramePointer_;
+  mem_t operandsOffset_;
+  mem_t variablesOffset_;
 
 public:
   BytecodeInterpreter(Code* code);
@@ -67,23 +70,27 @@ public:
   void execute();
 
 private:
-  StackFrame* stackFrame();
   void allocFrame(uint16_t functionId, uint32_t localsNumber);
   void callFunction(uint16_t id);
   void returnFunction();
 
   template<typename T>
   T* findVar(uint16_t id, uint16_t context) {
-    mem_t saveStackFrame = stackFramePointer_;
+    mem_t variables;
 
-    while (context > 0) {
-      stackFramePointer_ = stackFrame()->parentFrame();
-      --context;
+    if (frames_.empty()) {
+      variables = variablesOffset_;
+    } else {
+      mem_t frame = static_cast<mem_t>(frames_.size()) - 1;
+
+      for (uint16_t i = 0; i < context; ++i) {
+        frame = frames_.at(frame).parentFrame();
+      }
+
+      variables = frames_.at(frame).variablesOffset();
     }
-
-    T* t = (T*) (stack_ + stackFramePointer_ + sizeof(StackFrame) + constants::VAL_SIZE * id);
-    stackFramePointer_ = saveStackFrame;
-    return t;
+    
+    return reinterpret_cast<T*> (stack_ + variables + id * constants::VAL_SIZE);
   }
 
   template<typename T>
@@ -92,30 +99,60 @@ private:
   }
 
   template<typename T>
+  void loadLocalVar() {
+    uint16_t ctx = 0;
+    uint16_t id = readFromBcAndShift<uint16_t>();
+    loadVar<T>(id, ctx); 
+  }
+
+  template<typename T>
+  void loadClosureVar() {
+    uint16_t ctx = readFromBcAndShift<uint16_t>();
+    uint16_t id = readFromBcAndShift<uint16_t>();
+    loadVar<T>(id, ctx); 
+  }
+
+  template<typename T>
   void storeVar(uint16_t id, uint16_t context, T val) {
     *findVar<T>(id, context) = val;
   }
 
+  template<typename T>
+  void storeLocalVar() {
+    uint16_t ctx = 0;
+    uint16_t id = readFromBcAndShift<uint16_t>();
+    T value = pop<T>();
+    storeVar<T>(id, ctx, value); 
+  }
+
+  template<typename T>
+  void storeClosureVar() {
+    uint16_t ctx = readFromBcAndShift<uint16_t>();
+    uint16_t id = readFromBcAndShift<uint16_t>();
+    T value = pop<T>();
+    storeVar<T>(id, ctx, value); 
+  }
+
 
   void remove() {
-    stackPointer_ -= constants::VAL_SIZE;
+    operandsOffset_ -= constants::VAL_SIZE;
   }
 
   template<typename T>
   T* operand() {
-    return reinterpret_cast<T*> (stack_ + stackPointer_);
+    return reinterpret_cast<T*> (stack_ + operandsOffset_);
   }
 
   template<typename T>
   T pop() {
-    stackPointer_ -= constants::VAL_SIZE;
+    operandsOffset_ -= constants::VAL_SIZE;
     return *operand<T>();
   }
 
   template<typename T>
   void push(T val) {
     *operand<T>() = val; 
-    stackPointer_ += constants::VAL_SIZE;
+    operandsOffset_ += constants::VAL_SIZE;
   }
 
   template<typename T>

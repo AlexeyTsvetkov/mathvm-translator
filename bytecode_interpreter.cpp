@@ -31,8 +31,8 @@ namespace mathvm {
 
 BytecodeInterpreter::BytecodeInterpreter(Code* code)
   : instructionPointer_(0), 
-    stackPointer_(0), 
-    stackFramePointer_(constants::MAX_STACK_SIZE) 
+    operandsOffset_(0), 
+    variablesOffset_(constants::MAX_STACK_SIZE) 
 {
   stack_ = new char[constants::MAX_STACK_SIZE];
   code_ = dynamic_cast<InterpreterCodeImpl*>(code);
@@ -46,7 +46,7 @@ BytecodeInterpreter::~BytecodeInterpreter() {
 }
 
 void BytecodeInterpreter::execute() {
-  while (instructionPointer_ < bc()->length()) {
+  while (true) {
     Instruction bci = bc()->getInsn(instructionPointer_++);
     //debug(instructionPointer_ - 1, " :: ", bytecodeName(bci, 0));
 
@@ -100,31 +100,15 @@ void BytecodeInterpreter::execute() {
       case BC_IFICMPL:  CMP_OP(<,  instructionPointer_, int16_t); break;
       case BC_IFICMPLE: CMP_OP(<=, instructionPointer_, int16_t); break;
 
-      case BC_LOADIVAR: 
-        loadVar<int64_t>(readFromBcAndShift<uint16_t>(), 0); 
-        break;
-      case BC_LOADDVAR: 
-        loadVar<double>(readFromBcAndShift<uint16_t>(), 0); 
-        break;
-      case BC_LOADCTXIVAR: 
-        loadVar<int64_t>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>()); 
-        break;
-      case BC_LOADCTXDVAR: 
-        loadVar<double>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>()); 
-        break;
-
-      case BC_STOREIVAR: 
-        storeVar<int64_t>(readFromBcAndShift<uint16_t>(), 0, pop<int64_t>()); 
-        break;
-      case BC_STOREDVAR: 
-        storeVar<double>(readFromBcAndShift<uint16_t>(), 0, pop<double>()); 
-        break;
-      case BC_STORECTXIVAR: 
-        storeVar<int64_t>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>(), pop<int64_t>()); 
-        break;
-      case BC_STORECTXDVAR: 
-        storeVar<double>(readFromBcAndShift<uint16_t>(), readFromBcAndShift<uint16_t>(), pop<double>()); 
-        break;
+      case BC_LOADIVAR: loadLocalVar<int64_t>(); break;
+      case BC_LOADDVAR: loadLocalVar<double>(); break;
+      case BC_LOADCTXIVAR: loadClosureVar<int64_t>(); break;
+      case BC_LOADCTXDVAR: loadClosureVar<double>(); break;
+      
+      case BC_STOREIVAR: storeLocalVar<int64_t>(); break;
+      case BC_STOREDVAR: storeLocalVar<double>(); break;
+      case BC_STORECTXIVAR: storeClosureVar<int64_t>(); break;
+      case BC_STORECTXDVAR: storeClosureVar<double>(); break;
 
       case BC_CALL: callFunction(readFromBcAndShift<uint16_t>()); break;
       case BC_RETURN: returnFunction(); break;
@@ -134,27 +118,29 @@ void BytecodeInterpreter::execute() {
       
       default: throw InterpreterException("Not implemented instruction");
     }
+
+    //debug(bytecodeName(bci, 0), " ", function_->name());
   } // while
 } // execute
 
-
-StackFrame* BytecodeInterpreter::stackFrame() { 
-  return reinterpret_cast<StackFrame*>(stack_ + stackFramePointer_); 
-}
-
 void BytecodeInterpreter::allocFrame(uint16_t functionId, uint32_t localsNumber) {
-  mem_t returnFrame = stackFramePointer_;
-  mem_t parentFrame = stackFramePointer_;
+  mem_t parentFrame;
   
-  if (functionId != 0 && functionId == function_->id()) {
-    parentFrame = stackFrame()->parentFrame();
+  if (frames_.empty()) {
+    parentFrame = 0;
+  } else {
+    if (functionId != 0 && functionId == function_->id()) {
+      parentFrame = frames_.back().parentFrame();
+    } else { 
+      parentFrame = static_cast<mem_t>(frames_.size()) - 1;
+    }
   }
 
-  stackFramePointer_ -= (sizeof(StackFrame) + constants::VAL_SIZE * function_->localsNumber());
-  *stackFrame() = StackFrame(function_->id(), 
-                             instructionPointer_, 
-                             parentFrame,
-                             returnFrame);
+  variablesOffset_ -= constants::VAL_SIZE * function_->localsNumber();
+  frames_.push_back(StackFrame(function_->id(), 
+                               instructionPointer_, 
+                               parentFrame,
+                               variablesOffset_));
 }
 
 void BytecodeInterpreter::callFunction(uint16_t id) {
@@ -165,14 +151,14 @@ void BytecodeInterpreter::callFunction(uint16_t id) {
 } 
 
 void BytecodeInterpreter::returnFunction() {
-  uint64_t returnValue = pop<uint64_t>();
-  
-  StackFrame* frame = stackFrame();
-  instructionPointer_ = frame->instruction();
-  stackFramePointer_  = frame->returnFrame();
+  const StackFrame& frame = frames_.back();
+  instructionPointer_ = frame.instruction();
+  uint16_t functionId = frame.function();
+  function_ = code_->functionById(functionId);
+  frames_.pop_back();
 
-  function_ = code_->functionById(frame->function());
-  push(returnValue);
+  variablesOffset_  = frames_.back().variablesOffset();
+
 }
 
 } // namespace mathvm
