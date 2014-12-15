@@ -38,7 +38,7 @@ BytecodeInterpreter::BytecodeInterpreter(Code* code)
   code_ = dynamic_cast<InterpreterCodeImpl*>(code);
   assert(code_ != NULL);
   function_ = code_->functionById(0);
-  allocFrame(0, function_->localsNumber());
+  allocFrame(0, function_->localsNumber(), -1);
 }
 
 BytecodeInterpreter::~BytecodeInterpreter() {
@@ -123,17 +123,27 @@ void BytecodeInterpreter::execute() {
   } // while
 } // execute
 
-void BytecodeInterpreter::allocFrame(uint16_t functionId, uint32_t localsNumber) {
-  mem_t parentFrame;
-  
-  if (frames_.empty()) {
-    parentFrame = 0;
-  } else {
-    if (functionId != 0 && functionId == function_->id()) {
-      parentFrame = frames_.back().parentFrame();
-    } else { 
-      parentFrame = static_cast<mem_t>(frames_.size()) - 1;
-    }
+/*
+ * functionContext is difference between
+ * current function deepness and called function deepness
+ * 
+ * For example: 
+ *   function void f() {
+ *     function void g() {
+ *       f();
+ *     }
+ *
+ *     g();
+ *   }
+ * For call g() from f context is -1;
+ * for call f() from g context is 1.
+ */
+void BytecodeInterpreter::allocFrame(uint16_t functionId, uint32_t localsNumber, int64_t context) {
+  assert(context >= -1);
+  mem_t parentFrame = static_cast<mem_t>(frames_.size()) - 1; 
+
+  for (int64_t i = 0; i < context + 1; ++i) {
+    parentFrame = frames_.at(parentFrame).parentFrame();
   }
 
   variablesOffset_ -= constants::VAL_SIZE * function_->localsNumber();
@@ -144,9 +154,9 @@ void BytecodeInterpreter::allocFrame(uint16_t functionId, uint32_t localsNumber)
 }
 
 void BytecodeInterpreter::callFunction(uint16_t id) {
-  debug(function_->id(), "->", id);
+  //debug(function_->id(), "->", id);
   BytecodeFunction* called = code_->functionById(id);
-  allocFrame(called->id(), called->localsNumber());
+  allocFrame(called->id(), called->localsNumber(), pop<int64_t>());
   function_ = called;
   instructionPointer_ = 0;
 } 
@@ -155,7 +165,7 @@ void BytecodeInterpreter::returnFunction() {
   const StackFrame& frame = frames_.back();
   instructionPointer_ = frame.instruction();
   uint16_t functionId = frame.function();
-  debug(functionId, "<-", function_->id());
+  //debug(functionId, "<-", function_->id());
   function_ = code_->functionById(functionId);
   frames_.pop_back();
 

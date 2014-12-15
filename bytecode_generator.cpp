@@ -256,8 +256,14 @@ void BytecodeGenerator::visit(CallNode* node) {
     cast(argument, function->parameterType(i), bc());
   }  
 
+  uint16_t calledFunctionId = ctx()->getId(function);
+  int32_t currentContext = ctx()->currentFunction()->deepness();
+  int32_t targetContext = ctx()->functionById(calledFunctionId)->deepness();
+  bc()->addInsn(BC_ILOAD);
+  bc()->addInt64(currentContext - targetContext);
+
   bc()->addInsn(BC_CALL);
-  bc()->addUInt16(ctx()->getId(function));
+  bc()->addUInt16(calledFunctionId);
   setType(node, function->returnType());
 }
 

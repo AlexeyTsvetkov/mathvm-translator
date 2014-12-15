@@ -70,7 +70,7 @@ public:
   void execute();
 
 private:
-  void allocFrame(uint16_t functionId, uint32_t localsNumber);
+  void allocFrame(uint16_t functionId, uint32_t localsNumber, int64_t context);
   void callFunction(uint16_t id);
   void returnFunction();
 
