@@ -16,7 +16,7 @@ namespace mathvm {
 typedef int32_t mem_t;
 
 namespace constants {
-  const mem_t MAX_STACK_SIZE = 512*1024*1024;
+  const mem_t MAX_STACK_SIZE = 128*1024*1024;
   const mem_t VAL_SIZE = std::max(sizeof(int64_t), sizeof(double));
 }
 
