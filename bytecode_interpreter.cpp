@@ -46,9 +46,8 @@ BytecodeInterpreter::~BytecodeInterpreter() {
 }
 
 void BytecodeInterpreter::execute() {
-  while (instructionPointer_ < bc()->length()) {
+  while (true) {
     Instruction bci = bc()->getInsn(instructionPointer_++);
-    //debug(instructionPointer_ - 1, " :: ", bytecodeName(bci, 0));
 
     switch (bci) {
       case BC_INVALID: 
@@ -175,7 +174,7 @@ void BytecodeInterpreter::allocFrame(uint16_t functionId, uint32_t localsNumber,
   }
 
   mem_t returnFrame = stackFramePointer_;
-  stackFramePointer_ -= (sizeof(StackFrame) + constants::VAL_SIZE * function_->localsNumber());
+  stackFramePointer_ -= (sizeof(StackFrame) + constants::VAL_SIZE * localsNumber);
   *stackFrame() = StackFrame(function_->id(), 
                              instructionPointer_, 
                              parentFrame,
@@ -191,11 +190,9 @@ void BytecodeInterpreter::callFunction(uint16_t id) {
 
 void BytecodeInterpreter::returnFunction() {
   uint64_t returnValue = pop<uint64_t>();
-  
   StackFrame* frame = stackFrame();
   instructionPointer_ = frame->instruction();
   stackFramePointer_  = frame->returnFrame();
-
   function_ = code_->functionById(frame->function());
   push(returnValue);
 }
